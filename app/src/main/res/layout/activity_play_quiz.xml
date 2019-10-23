@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- Debug String Start -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:textSize="20dp"
+        android:text="おはよう"
+        android:id="@+id/intentMsg"/>
+    <!-- Debug String Start -->
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:textSize="20dp"
+        android:text="第1問"
+        android:id="@+id/currentQuiz"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:textSize="20dp"
+        android:text="本文はこちら"
+        android:id="@+id/quizBodyText"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="ChoiseA"
+        android:id="@+id/btnChoiseA"
+        android:textColor="@color/colorAccent" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="ChoiseB"
+        android:id="@+id/btnChoiseB"
+        android:textColor="@color/colorAccent" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="ChoiseC"
+        android:id="@+id/btnChoiseC"
+        android:textColor="@color/colorAccent" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="ChoiseD"
+        android:id="@+id/btnChoiseD"
+        android:textColor="@color/colorAccent" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="結果"
+        android:textSize="50dp"
+        android:id="@+id/resultString"
+        android:visibility="invisible"
+        android:textColor="@color/colorAccent" />
+
+    <!-- 選択肢をTAP後にしごとする -->
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="解説"
+        android:id="@+id/btnDetail"
+        android:visibility="invisible"
+        android:enabled="false"
+        android:textColor="@color/colorAccent" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="次の設問へ"
+        android:id="@+id/btnNextQuiz"
+        android:visibility="invisible"
+        android:enabled="false"
+        android:textColor="@color/colorAccent" />
+
+
+
+</LinearLayout>

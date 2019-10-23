@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:textSize="40dp"
+        android:text="教養を蓄えろ"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:textSize="15dp"
+        android:text="ジャンルを指定してクイズをはじめる"/>
+
+    <Button
+        android:layout_width="360dp"
+        android:layout_height="wrap_content"
+        android:text="スポーツ"
+        android:id="@+id/buttonGenreSports"/>
+
+    <Button
+        android:layout_width="360dp"
+        android:layout_height="wrap_content"
+        android:text="2019年ネタ"
+        android:id="@+id/buttonGenre2019Neta"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:textSize="15dp"
+        android:text="設定メニュー"/>
+
+    <Button
+        android:layout_width="360dp"
+        android:layout_height="wrap_content"
+        android:text="ログイン"
+        android:id="@+id/buttonLogin"/>
+
+    <Button
+        android:layout_width="360dp"
+        android:layout_height="wrap_content"
+        android:text="My Settings"
+        android:id="@+id/buttonSettings"/>
+
+    <Button
+        android:layout_width="360dp"
+        android:layout_height="wrap_content"
+        android:text="ランキングをみる"
+        android:id="@+id/buttonRank"/>
+
+
+</LinearLayout>
