@@ -11,10 +11,16 @@ import androidx.core.view.isVisible
 import kotlinx.android.synthetic.main.activity_play_quiz.*
 import kotlinx.android.synthetic.main.activity_play_quiz.view.*
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.*
 
 class PlayQuiz : AppCompatActivity(), View.OnClickListener {
     // クイズ全問が入っている
     private lateinit var mQuizArray: ArrayList<Quiz>
+    private lateinit var mFBQuizArray: ArrayList<Quiz>
+    lateinit var choiseArray:ArrayList<String>
+
+
     // ただいま何問目かを示す
     var currentQuizIndex:Int = 0
     // ユーザーが洗濯したAnswer
@@ -25,16 +31,62 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
     // ジャンルの初期値
     var mGenre = GENRE_DEFAULTVALUE
 
+    //////////////// FB 工事中
+    private lateinit var mQuizRef: DatabaseReference
+
+    private val mQuizListener = object : ChildEventListener {
+        override fun onChildAdded(p0: DataSnapshot, p1: String?) {
+            val quizMap = p0.value as Map<String, String>
+            val quizId = p0.key ?: ""
+
+            val quizText: String =  quizMap["QuizText"]  ?: "" //quiz.quizBody
+            choiseArray = quizMap["choises"] as ArrayList<String> // java.util.ArrayList<String> = quiz.quizChoises
+            choiseArray.removeAt(0) // ゼロ番目になぜか null が入るのでこちらでカバー
+            Log.d("machid", "the array" + choiseArray.toString())
+
+/*
+            for (choise in quizChoisesMap!!.keys) {
+                Log.d("machid","array="+ choise)
+//                choiseArray.add(choise)
+            }
+
+ */
+
+//            val correctAnswer: String = quiz.correctAnswer
+//            val descriptions: String = quiz.descriptions
+//            val quizId: String = quiz.quizId
+//            val genre: Int = quiz.genre
+//            val stubSportsQuiz = Quiz(quizBody, quizChoises, correctAnswer, descriptions, quizId, genre)
+//            mQuizArray.add(stubSportsQuiz)
+
+
+
+        }
+        override fun onCancelled(p0: DatabaseError) {
+        }
+        override fun onChildMoved(p0: DataSnapshot, p1: String?) {
+        }
+        override fun onChildChanged(p0: DataSnapshot, p1: String?) {
+        }
+        override fun onChildRemoved(p0: DataSnapshot) {
+        }
+    }
+
+
+    ////////////////　FB 工事中
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_play_quiz)
 
-        // アレイの初期化？？
+        // アレイの初期化
         mQuizArray = ArrayList<Quiz>()
 
         // ジャンルをSPから取得
         val extras = intent.extras
         mGenre = extras.getInt("genre")
+
+        // ローカルからFBに移行するまでは別メソッドで処理します
+        getQuizFromFB(mGenre)
 
         /////// 当該ジャンルのクイズ読み込み処理 - From Firebase
         ///////// あとで構築
@@ -102,7 +154,7 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
             resultString.text = "正解🙌"
             numCorrectAnswers += 1
         } else {
-            resultString.text = "不正解😭　💢😡"
+            resultString.text = "不正解😡"
             numWrongAnswers += 1
         }
 
@@ -119,7 +171,6 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
     // テスト用のメソッド：クイズ取得処理
     private fun testGetQuiz(){
         lateinit var stubQuiz: ArrayList<Quiz>
-//            stubSportsQuizArrayList
 
         if (mGenre == GENRE_SPORTS) {
             stubQuiz = stubSportsQuizArrayList
@@ -197,5 +248,21 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
     override fun onResume() {
         super.onResume()
         Log.d("machid", "ONRESUMEだよ〜")
+    }
+
+    // FBから情報とります
+    private fun getQuizFromFB(genre:Int){
+        val user = FirebaseAuth.getInstance().currentUser
+
+        if (user != null) {
+            Log.d("machid","ログインOK")
+        } else {
+            Log.d("machid","ログインできてない")
+        }
+
+        val dataBaseReference = FirebaseDatabase.getInstance().reference
+        mQuizRef = dataBaseReference.child(genre.toString())
+        mQuizRef.addChildEventListener(mQuizListener)
+
     }
 }

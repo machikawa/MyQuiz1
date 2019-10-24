@@ -6,5 +6,10 @@ const val GENRE_DEFAULTVALUE : Int = 9999
 
 const val STR_DETAIL_EXPLAINATION = "解説"
 const val SP_STR_DISPLAY_NAME = "displayName"
+
 const val FBPATH_USERS = "users"
+const val FBPATH_GENRE = "genre"
+const val FBPATH_GENRE_QuizId = "quizId"
+
+
 
