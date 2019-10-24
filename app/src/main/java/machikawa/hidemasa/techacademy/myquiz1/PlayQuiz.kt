@@ -20,7 +20,6 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
     private lateinit var mFBQuizArray: ArrayList<Quiz>
     lateinit var choiseArray:ArrayList<String>
 
-
     // ただいま何問目かを示す
     var currentQuizIndex:Int = 0
     // ユーザーが洗濯したAnswer
@@ -37,31 +36,22 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
     private val mQuizListener = object : ChildEventListener {
         override fun onChildAdded(p0: DataSnapshot, p1: String?) {
             val quizMap = p0.value as Map<String, String>
-            val quizId = p0.key ?: ""
-
+            // 各項目の設定
             val quizText: String =  quizMap["QuizText"]  ?: "" //quiz.quizBody
+
             choiseArray = quizMap["choises"] as ArrayList<String> // java.util.ArrayList<String> = quiz.quizChoises
             choiseArray.removeAt(0) // ゼロ番目になぜか null が入るのでこちらでカバー
-            Log.d("machid", "the array" + choiseArray.toString())
 
-/*
-            for (choise in quizChoisesMap!!.keys) {
-                Log.d("machid","array="+ choise)
-//                choiseArray.add(choise)
-            }
-
- */
-
-//            val correctAnswer: String = quiz.correctAnswer
-//            val descriptions: String = quiz.descriptions
-//            val quizId: String = quiz.quizId
-//            val genre: Int = quiz.genre
-//            val stubSportsQuiz = Quiz(quizBody, quizChoises, correctAnswer, descriptions, quizId, genre)
-//            mQuizArray.add(stubSportsQuiz)
-
-
-
+            val correctAnswer: String = quizMap["correctChoise"] ?:  ""
+            val descriptions: String = quizMap["description"] ?: ""
+            val quizId = p0.key ?: ""
+            val genre: Int = genre
+            val stubSportsQuiz = Quiz(quizText, choiseArray, correctAnswer, descriptions, quizId, genre)
+            mQuizArray.add(stubSportsQuiz)
+            Log.d("machid",mQuizArray[0].toString())
+            showQuiz()
         }
+
         override fun onCancelled(p0: DatabaseError) {
         }
         override fun onChildMoved(p0: DataSnapshot, p1: String?) {
@@ -87,14 +77,16 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
 
         // ローカルからFBに移行するまでは別メソッドで処理します
         getQuizFromFB(mGenre)
-
         /////// 当該ジャンルのクイズ読み込み処理 - From Firebase
         ///////// あとで構築
 
+
+
         /////// 当該ジャンルのクイズ読み込み処理 - From テストデータ
-        testGetQuiz()
+        //   testGetQuiz()
         // クイズに応じてUIを変更
-        showQuiz()
+//        showQuiz()
+
         // 全てのボタンにリスナー登録を
         btnChoiseA.setOnClickListener(this)
         btnChoiseB.setOnClickListener(this)
@@ -157,6 +149,8 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
             resultString.text = "不正解😡"
             numWrongAnswers += 1
         }
+        Log.d("machid","userSelected"+mQuizArray[currentQuizIndex].quizChoises[userSelectedAnswerIndex])
+        Log.d("machid","correct"+mQuizArray[currentQuizIndex].correctAnswer)
 
         // 結果表示
         resultString.isInvisible = false
@@ -190,7 +184,7 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    // UI 常にクイズを出す処理
+    // UI 常にクイズを出す処理、問題切り替え時には毎回実行させる。
     private fun showQuiz(){
         quizBodyText.text = mQuizArray[currentQuizIndex].quizBody
         currentQuiz.text = "第" + (currentQuizIndex + 1).toString() + "問"
@@ -219,7 +213,6 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
     private fun enableAllChoiseBtn(){
         btnChoiseA.isEnabled = true; btnChoiseB.isEnabled = true; btnChoiseC.isEnabled = true; btnChoiseD.isEnabled = true
     }
-
 
     // 次へボタンの可視化AND有効化
     private fun showAfterCareButton(){
