@@ -15,7 +15,6 @@
         android:id="@+id/intentMsg"/>
     <!-- Debug String Start -->
 
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -30,6 +29,7 @@
         android:layout_centerInParent="true"
         android:textSize="20dp"
         android:text="本文はこちら"
+        android:visibility="invisible"
         android:id="@+id/quizBodyText"/>
 
     <Button
@@ -38,6 +38,7 @@
         android:layout_marginTop="4dp"
         android:text="ChoiseA"
         android:id="@+id/btnChoiseA"
+        android:visibility="invisible"
         android:textColor="@color/colorAccent" />
 
     <Button
@@ -46,6 +47,7 @@
         android:layout_marginTop="4dp"
         android:text="ChoiseB"
         android:id="@+id/btnChoiseB"
+        android:visibility="invisible"
         android:textColor="@color/colorAccent" />
 
     <Button
@@ -54,6 +56,7 @@
         android:layout_marginTop="4dp"
         android:text="ChoiseC"
         android:id="@+id/btnChoiseC"
+        android:visibility="invisible"
         android:textColor="@color/colorAccent" />
 
     <Button
@@ -62,6 +65,7 @@
         android:layout_marginTop="4dp"
         android:text="ChoiseD"
         android:id="@+id/btnChoiseD"
+        android:visibility="invisible"
         android:textColor="@color/colorAccent" />
 
     <TextView

@@ -9,6 +9,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
+        android:textSize="15dp"
+        android:text="ようこそ"
+        android:id="@+id/STRDisplayName"    />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
         android:textSize="40dp"
         android:text="教養を蓄えろ"/>
 
@@ -41,7 +49,7 @@
     <Button
         android:layout_width="360dp"
         android:layout_height="wrap_content"
-        android:text="ログイン"
+        android:text="ログイン/アカウント作成"
         android:id="@+id/buttonLogin"/>
 
     <Button
@@ -56,5 +64,23 @@
         android:text="ランキングをみる"
         android:id="@+id/buttonRank"/>
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:textSize="15dp"
+        android:text="管理メニュー"/>
+
+    <Button
+        android:layout_width="360dp"
+        android:layout_height="wrap_content"
+        android:text="問題を作る"
+        android:id="@+id/buttonCreateQuiz"/>
+
+    <Button
+        android:layout_width="360dp"
+        android:layout_height="wrap_content"
+        android:text="問題を改変する"
+        android:id="@+id/buttonEditQuiz"/>
 
 </LinearLayout>

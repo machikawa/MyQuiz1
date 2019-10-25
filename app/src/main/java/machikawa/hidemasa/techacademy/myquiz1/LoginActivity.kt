@@ -3,6 +3,7 @@ package machikawa.hidemasa.techacademy.myquiz1
 import android.content.Context
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.app.AppCompatActivity
@@ -107,7 +108,6 @@ class LoginActivity : AppCompatActivity() {
             if (email.length != 0 && password.length >= 6 && displayName.length != 0) {
                 // ログイン時に表示名を保存するようにフラグを立てる
                 mIsCreateAccount = true
-
                 createAccount(email, password)
             } else {
                 // エラーを表示する
@@ -129,7 +129,7 @@ class LoginActivity : AppCompatActivity() {
                 login(email, password)
             } else {
                 // エラーを表示する
-                Snackbar.make(v, "視覚情報を正しく入力してください", Snackbar.LENGTH_LONG).show()
+                Snackbar.make(v, "資格情報を正しく入力してください", Snackbar.LENGTH_LONG).show()
             }
         }
     }
