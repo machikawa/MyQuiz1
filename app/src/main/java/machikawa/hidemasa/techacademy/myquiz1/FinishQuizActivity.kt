@@ -23,6 +23,7 @@ class FinishQuizActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_finish_quiz)
+        title = "クイズ結果発表！"
         // Intent からの正解、不正回数の確認
         val extras = intent.extras
         numCorrectAnswers = extras.getInt("numCorrect")
@@ -36,18 +37,17 @@ class FinishQuizActivity : AppCompatActivity() {
 
         // 合否判定
         if (result < 0.8) {
-            Uzaiko.text = "不合格です..."
-            Uzaiko.textSize = 40.toFloat()
-            Uzaiko.setTextColor(Color.parseColor("#4e32a8"))
+            Genjitsu.text = "不合格です..."
+            Genjitsu.textSize = 40.toFloat()
+            Genjitsu.setTextColor(Color.parseColor("#4e32a8"))
         } else if (result >= 0.8) {
-            Uzaiko.text = "合格！！"
-            Uzaiko.textSize = 50.toFloat()
-            Uzaiko.setTextColor(Color.parseColor("#ff6347"))
+            Genjitsu.text = "合格！！"
+            Genjitsu.textSize = 50.toFloat()
+            Genjitsu.setTextColor(Color.parseColor("#ff6347"))
         }
-
         // 遅れて結果表示
         mHandler.postDelayed(Runnable {
-            Uzaiko.isVisible = true
+            Genjitsu.isVisible = true
         }, 5000)
 
         // 終わるボタンのクリックリスナー

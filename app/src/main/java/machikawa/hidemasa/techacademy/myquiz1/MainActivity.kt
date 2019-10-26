@@ -10,15 +10,16 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.activity_login.*
 import kotlinx.android.synthetic.main.activity_main.*
+import java.util.*
 
 class MainActivity : AppCompatActivity(),View.OnClickListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        title = "MC Quiz v1"
 
         val user = FirebaseAuth.getInstance().currentUser
-
         if (user != null) {
             buttonLogin.text = "ログアウト"
         }
@@ -26,7 +27,6 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
         // クイズジャンルを洗濯して遷移させる。これは共通処理に近しいのでOnclickでやらせる
         buttonGenreSports.setOnClickListener(this)
         buttonGenre2019Neta.setOnClickListener(this)
-
         // ログイン時にはログアウトボタンに早変わり。
         buttonLogin.setOnClickListener{v ->
             if (user != null) {
@@ -55,7 +55,6 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
                 intent = Intent(applicationContext, PlayQuiz::class.java)
                 intent.putExtra("genre", GENRE_2019NETA)
             }
-
         }
         startActivity(intent)
     }
@@ -71,6 +70,5 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
             val dispName = sp.getString(SP_STR_DISPLAY_NAME, "")
             STRDisplayName.text = "こんにちは " + dispName + "さん"
         }
-
     }
 }

@@ -3,6 +3,7 @@ package machikawa.hidemasa.techacademy.myquiz1
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.preference.PreferenceManager
 import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AlertDialog
@@ -20,10 +21,9 @@ import kotlin.collections.ArrayList
 class PlayQuiz : AppCompatActivity(), View.OnClickListener {
     // クイズ全問が入っている
     private lateinit var mQuizArray: ArrayList<Quiz>
-//    private lateinit var mFBQuizArray: ArrayList<Quiz>
     private lateinit var choiseArray: ArrayList<String>
     private lateinit var resultArray: ArrayList<Result>
-
+    private lateinit var userId:String
     // ただいま何問目かを示す
     var currentQuizIndex: Int = 0
     // ユーザーが洗濯したAnswer
@@ -37,7 +37,7 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
     var isAlreadyCalledShowQuiz: Boolean = false
     // Quiz読み出し時のDBRef
     private lateinit var mQuizRef: DatabaseReference
-
+    // クイズの取得リスナー
     private val mQuizListener = object : ChildEventListener {
         override fun onChildAdded(p0: DataSnapshot, p1: String?) {
             val quizMap = p0.value as Map<String, String>
@@ -57,16 +57,12 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
                 showQuiz()
             }
         }
-
         override fun onCancelled(p0: DatabaseError) {
         }
-
         override fun onChildMoved(p0: DataSnapshot, p1: String?) {
         }
-
         override fun onChildChanged(p0: DataSnapshot, p1: String?) {
         }
-
         override fun onChildRemoved(p0: DataSnapshot) {
         }
     }
@@ -77,13 +73,18 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
         // アレイの初期化
         mQuizArray = ArrayList<Quiz>()
         resultArray=ArrayList<Result>()
+        userId = ""
+        val user = FirebaseAuth.getInstance().currentUser
+
+        // ページタイトルの設定
+        title = "クイズに正解して高みを目指せ"
+
         // ジャンルをSPから取得
         val extras = intent.extras
         mGenre = extras.getInt("genre")
+
         // intentに含まれるGenreからクイズを取得
         getQuizFromFB(mGenre)
-        /////// 当該ジャンルのクイズ読み込み処理 - From テストデータ
-        //   testGetQuiz()
 
         // 全てのボタンにリスナー登録を
         btnChoiseA.setOnClickListener(this)
@@ -99,20 +100,21 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
                 builder.setMessage("この問題の解説はありませんorz")
             }
             builder.setMessage(mQuizArray[currentQuizIndex].descriptions)
-
             builder.setNeutralButton("お気に入りに追加"){_, _ ->
-                /// Firebase へのお気に入り追加処理
-                /////////////////////////////////
-                // Snackbarでの表示
-                Snackbar.make(view, "お気に入りに追加しました", Snackbar.LENGTH_LONG).show()
+                /// Firebase へのお気に入り追加処理, ログインしていないと警告に終わる。
+                if (user == null) {
+                    Snackbar.make(view, "ログイン時のみ有効な機能です", Snackbar.LENGTH_LONG).show()
+                } else if (user != null) {
+                    saveFavoriteToFB()
+                    // Snackbarでの表示
+                    Snackbar.make(view, "お気に入りに追加しました", Snackbar.LENGTH_LONG).show()
+                }
             }
             // ダイアログを閉じるボタン
             builder.setNegativeButton("とじる", null)
-
             val dialog = builder.create()
             dialog.show()
         }
-
         // 次へボタンのアクション
         btnNextQuiz.setOnClickListener {view ->
             // 最終問題の時の処理
@@ -138,22 +140,23 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
             R.id.btnChoiseC -> userSelectedAnswerIndex = 2
             R.id.btnChoiseD -> userSelectedAnswerIndex = 3
         }
-
-        // 成否判断 + 文字列セット
+        // クイズの成否判断選んだ文字列と、クイズの正解の文字列が等しい場合正解
+        // テキスト切り替えと、正解不正解数のカウントアップを行う
         if (mQuizArray[currentQuizIndex].quizChoises[userSelectedAnswerIndex]
             == mQuizArray[currentQuizIndex].correctAnswer) {
-            resultString.text = "正解🙌"
-            // 結果アレイに格納
+            resultString.text = "⭕️正解🙆‍♀️"
             resultArray.add(Result(mQuizArray[currentQuizIndex].quizId,currentQuizIndex,true))
             numCorrectAnswers += 1
+            // ボタン変更処理
         } else {
-            resultString.text = "不正解😡"
+            resultString.text = "❌不正解🙅‍♂️"
             resultArray.add(Result(mQuizArray[currentQuizIndex].quizId, currentQuizIndex,false))
             numIncorrectAnswers += 1
+            // ボタン変更処理
         }
-        // 結果表示
+        // 結果表示：インビジブル解放
         resultString.isInvisible = false
-        // 既存選択肢ボタンをNOT活性化して押せないように
+        // 既存選択肢ボタンをNOT活性化して押せないようにする
         disableAllChoiseBtn()
         // 解説ボタンと、次へボタンの表示を行う
         showAfterCareButton()
@@ -170,7 +173,8 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
         btnChoiseB.text = mQuizArray[currentQuizIndex].quizChoises[1]
         // 一旦全ての選択肢をVisibleに
         changeVisibleState()
-        // 選択肢数に応じてボタンをインビジブル
+
+        // 選択肢数に応じてボタンをインビジブルに切り替える処理
         if (mQuizArray[currentQuizIndex].quizChoises.size == 2) {
             btnChoiseC.isInvisible = true
             btnChoiseD.isInvisible = true
@@ -181,6 +185,90 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
             btnChoiseC.text = mQuizArray[currentQuizIndex].quizChoises[2]
             btnChoiseD.text = mQuizArray[currentQuizIndex].quizChoises[3]
         }
+    }
+
+    // 次へボタンの可視化AND有効化
+    private fun showAfterCareButton(){
+        // 次へボタンは最後の問題なら終えるようにしなきゃいけない
+        if (currentQuizIndex >= mQuizArray.size -1) {
+            btnNextQuiz.text = "クイズを終える"
+        }
+        btnDetail.isEnabled = true; btnNextQuiz.isEnabled = true
+        btnDetail.isVisible = true; btnNextQuiz.isVisible = true
+    }
+
+    // 次へボタン押下時のボタン状態切り戻し
+    private fun resetBtnState(){
+        resultString.text = ""
+        resultString.isVisible = false
+        disappearAfterCareButton()
+        enableAllChoiseBtn()
+    }
+
+    // FBから情報とります
+    private fun getQuizFromFB(genre:Int){
+        val dataBaseReference = FirebaseDatabase.getInstance().reference
+        mQuizRef = dataBaseReference.child(FBPATH_GENRE).child(genre.toString())
+        mQuizRef.addChildEventListener(mQuizListener)
+    }
+
+    // クイズ結果をFBに保存する。[Result] - [Genre] - [userId] - [日付]　の順。
+    // UserIdはアノニマスの場合、GUID。結果はResultというアレイに入っている。
+    private fun saveResultToFB(){
+        // 現在の日付を取得
+        val df = SimpleDateFormat("yyyyMMddHHmmss")
+        val date = Date()
+        val quizPerformDate = df.format(date)
+        val user = FirebaseAuth.getInstance().currentUser
+        // ユーザーIDを指定する
+        if (user != null) {
+            userId = user.uid
+        } else if (user == null) {
+            val sp = PreferenceManager.getDefaultSharedPreferences(this)
+            userId = sp.getString(SP_STR_USER_ID, "")
+            if (userId.length == 0) {
+                val editor = sp.edit()
+                userId = UUID.randomUUID().toString()
+                editor.putString(SP_STR_USER_ID, userId)
+                editor.commit()
+            }
+        }
+        val databaseReference = FirebaseDatabase.getInstance().reference
+        val resultRef = databaseReference.child(FBPATH_RESULTS).child(mGenre.toString())
+           .child(userId).child(quizPerformDate.toString())
+        resultRef.setValue(resultArray)
+    }
+
+    // クイズ結果をFBに保存する。[Result] - [Genre] - [userId] - [日付]　の順。
+    // UserIdはアノニマスの場合、GUID。結果はResultというアレイに入っている。
+    private fun saveFavoriteToFB(){
+        val user = FirebaseAuth.getInstance().currentUser
+        // ユーザーIDを指定する
+        if (user != null) {
+            userId = user.uid
+        } else if (user == null) {
+            val sp = PreferenceManager.getDefaultSharedPreferences(this)
+            userId = sp.getString(SP_STR_USER_ID, "")
+            if (userId.length == 0) {
+                val editor = sp.edit()
+                userId = UUID.randomUUID().toString()
+                editor.putString(SP_STR_USER_ID, userId)
+                editor.commit()
+            }
+        }
+        val databaseReference = FirebaseDatabase.getInstance().reference
+        val resultRef = databaseReference.child(FBPATH_FAVORITES)
+            .child(userId)
+            .child(mGenre.toString())
+        resultRef.setValue(mQuizArray[currentQuizIndex].quizId)
+    }
+
+    // 最終画面に遷移する。正解数と不正回数を渡してアップないで計算する
+    private fun goToFinishScreen(){
+        intent = Intent(applicationContext, FinishQuizActivity::class.java)
+        intent.putExtra("numCorrect", numCorrectAnswers)
+        intent.putExtra("numIncorrect", numIncorrectAnswers)
+        startActivity(intent)
     }
 
     // 選択肢BTNの無効化
@@ -195,94 +283,9 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
     private fun changeVisibleState(){
         btnChoiseA.isVisible = true; btnChoiseB.isVisible = true ; btnChoiseC.isVisible = true ; btnChoiseD.isVisible = true ; quizBodyText.isVisible = true
     }
-
-    // 次へボタンの可視化AND有効化
-    private fun showAfterCareButton(){
-        // 次へボタンは最後の問題なら終えるようにしなきゃいけない
-        if (currentQuizIndex >= mQuizArray.size -1) {
-            btnNextQuiz.text = "クイズを終える"
-        }
-        btnDetail.isEnabled = true; btnNextQuiz.isEnabled = true
-        btnDetail.isVisible = true; btnNextQuiz.isVisible = true
-    }
-
     // 次へボタンの可視化AND有効化
     private fun disappearAfterCareButton(){
         btnDetail.isEnabled = false; btnNextQuiz.isEnabled = false
         btnDetail.isVisible = false; btnNextQuiz.isVisible = false
     }
-
-    // 次へボタン押下時のボタン状態切り戻し
-    private fun resetBtnState(){
-        resultString.text = ""
-        resultString.isVisible = false
-        disappearAfterCareButton()
-        enableAllChoiseBtn()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        Log.d("machid", "ONRESUMEだよ〜")
-    }
-
-    // FBから情報とります
-    private fun getQuizFromFB(genre:Int){
-        /*
-        val user = FirebaseAuth.getInstance().currentUser
-        if (user != null) {
-            Log.d("machid","ログインOK")
-        } else {
-            Log.d("machid","ログインできてない")
-        }
-         */
-        val dataBaseReference = FirebaseDatabase.getInstance().reference
-        mQuizRef = dataBaseReference.child(FBPATH_GENRE).child(genre.toString())
-        mQuizRef.addChildEventListener(mQuizListener)
-    }
-
-    private fun saveResultToFB(){
-        // 現在の日付を取得
-        val df = SimpleDateFormat("yyyyMMddHHmmss")
-        val date = Date()
-        val quizPerformDate = df.format(date)
-        val databaseReference = FirebaseDatabase.getInstance().reference
-        val resultRef = databaseReference.child(FBPATH_RESULTS).child(mGenre.toString())
-           .child(quizPerformDate.toString())
-        resultRef.push().setValue(resultArray)
-    }
-
-    private fun goToFinishScreen(){
-        intent = Intent(applicationContext, FinishQuizActivity::class.java)
-        intent.putExtra("numCorrect", numCorrectAnswers)
-        intent.putExtra("numIncorrect", numIncorrectAnswers)
-        startActivity(intent)
-    }
-
-    /////// ゴミ箱
-    /*
-// テスト用のメソッド：クイズ取得処理
-private fun testGetQuiz(){
-    lateinit var stubQuiz: ArrayList<Quiz>
-
-    if (mGenre == GENRE_SPORTS) {
-        stubQuiz = stubSportsQuizArrayList
-    } else if (mGenre == GENRE_2019NETA) {
-        stubQuiz = stub2019QuizArrayList
-    }
-
-    for (quiz in stubQuiz) {
-        val quizBody: String = quiz.quizBody
-        val quizChoises: java.util.ArrayList<String> = quiz.quizChoises
-        val correctAnswer: String = quiz.correctAnswer
-        val descriptions: String = quiz.descriptions
-        val quizId: String = quiz.quizId
-        val genre: Int = quiz.genre
-        val stubSportsQuiz = Quiz(quizBody, quizChoises, correctAnswer, descriptions, quizId, genre)
-        mQuizArray.add(stubSportsQuiz)
-    }
 }
-
- */
-
-}
-
