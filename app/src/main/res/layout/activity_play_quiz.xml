@@ -3,24 +3,18 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:paddingBottom="16dp"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp"
+    android:paddingTop="16dp"
     android:orientation="vertical">
 
-    <!-- Debug String Start -->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:textSize="20dp"
-        android:text="おはよう"
-        android:id="@+id/intentMsg"/>
-    <!-- Debug String Start -->
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:textSize="20dp"
-        android:text="第1問"
+        android:text="Now Loading..."
         android:id="@+id/currentQuiz"/>
 
     <TextView
@@ -98,6 +92,16 @@
         android:visibility="invisible"
         android:enabled="false"
         android:textColor="@color/colorAccent" />
+
+    <!-- おきに -->
+    <Button
+        android:id="@+id/favoriteBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#DCDCDC"
+        android:textSize="30dp"
+        android:text="★"
+        />
 
 
 

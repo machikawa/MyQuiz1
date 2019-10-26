@@ -1,6 +1,7 @@
 package machikawa.hidemasa.techacademy.myquiz1
 
 import android.content.Intent
+import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.preference.PreferenceManager
@@ -17,6 +18,7 @@ import com.google.firebase.database.*
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 class PlayQuiz : AppCompatActivity(), View.OnClickListener {
     // クイズ全問が入っている
@@ -66,15 +68,49 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
         override fun onChildRemoved(p0: DataSnapshot) {
         }
     }
+    // お気に入り
+    var isFavorite = false
+    private lateinit var mfavArray:ArrayList<String>
+    private lateinit var mfavRef:DatabaseReference
+    val favoritedBtnColor:String = "#FFD700"
+    val notFavoritedBtnColor:String = "#DCDCDC"
+
+    // おきに追加のイベントリスナー
+    private val mFavoriteEventListener = object : ChildEventListener {
+        override fun onCancelled(p0: DatabaseError) {
+        }
+        override fun onChildMoved(p0: DataSnapshot, p1: String?) {
+        }
+        override fun onChildChanged(p0: DataSnapshot, p1: String?) {
+        }
+        // お気に入りの追加が押さたときの処理として
+        override fun onChildAdded(p0: DataSnapshot, p1: String?) {
+            // 画面ロード時に当該ユーザーのお気に入りQuesitonID一覧が読み込まれるため、現在のQuestionUIDのものがあるか判断する
+            mfavArray.add(p0.key.toString())
+        }
+        // Remove 時の処理は EventListern にて実施する。
+        override fun onChildRemoved(p0: DataSnapshot) {
+        }
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_play_quiz)
-        // アレイの初期化
-        mQuizArray = ArrayList<Quiz>()
-        resultArray=ArrayList<Result>()
-        userId = ""
+
         val user = FirebaseAuth.getInstance().currentUser
+
+        // お気に入り関係の処理
+        if (user != null) {
+            val userFavsDBRef= FirebaseDatabase.getInstance().reference
+            mfavRef = userFavsDBRef.child(FBPATH_FAVORITES).child(user!!.uid.toString())
+            mfavRef.addChildEventListener(mFavoriteEventListener)
+        }
+        // 各種アレイの初期化
+        mQuizArray = ArrayList<Quiz>()
+        resultArray= ArrayList<Result>()
+        mfavArray = ArrayList<String>()
+        userId = ""
 
         // ページタイトルの設定
         title = "クイズに正解して高みを目指せ"
@@ -95,18 +131,16 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
         // 解説ボタンのアクション
         btnDetail.setOnClickListener {view ->
             val builder = AlertDialog.Builder(this@PlayQuiz)
-            builder.setTitle(STR_DETAIL_EXPLAINATION)
-            if (mQuizArray[currentQuizIndex].descriptions.length == 0){
-                builder.setMessage("この問題の解説はありませんorz")
-            }
+            builder.setTitle("正解は " + mQuizArray[currentQuizIndex].correctAnswer)
             builder.setMessage(mQuizArray[currentQuizIndex].descriptions)
+
             builder.setNeutralButton("お気に入りに追加"){_, _ ->
                 /// Firebase へのお気に入り追加処理, ログインしていないと警告に終わる。
                 if (user == null) {
-                    Snackbar.make(view, "ログイン時のみ有効な機能です", Snackbar.LENGTH_LONG).show()
+                    Snackbar.make(view, "お気に入りはログイン時のみ有効です", Snackbar.LENGTH_LONG).show()
                 } else if (user != null) {
-                    saveFavoriteToFB()
-                    // Snackbarでの表示
+                    saveFavoriteToFB(user.uid)
+                    // Snackbarでの表示。成功前提…
                     Snackbar.make(view, "お気に入りに追加しました", Snackbar.LENGTH_LONG).show()
                 }
             }
@@ -126,19 +160,46 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
             } else {
                 currentQuizIndex += 1
                 resetBtnState()
+                judgeFavorite()
                 showQuiz()
             }
         }
+        // お気に入りボタンのアクション
+        if (user != null) {
+            favoriteBtn.visibility = View.VISIBLE
+            //ボタンタップでオキニ削除or登録.
+            favoriteBtn.setOnClickListener {
+                if (isFavorite) {
+                    removeFavoriteToFB(user.uid)
+                    undoFavoriteAction()
+                    Snackbar.make(
+                        findViewById(android.R.id.content),
+                        "お気に入りから削除されました",
+                        Snackbar.LENGTH_SHORT
+                    ).show()
+                } else if (!isFavorite) {
+                    saveFavoriteToFB(user.uid)
+                    favoriteAction()
+                    Snackbar.make(
+                        findViewById(android.R.id.content),
+                        "お気に入りに追加されました",
+                        Snackbar.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        } else {
+            favoriteBtn.visibility = View.INVISIBLE
+        }
     }
 
-    // 成否判断して次へ
+    // 選択肢ボタンの処理成否判断して次へ
     override fun onClick(v: View) {
         // どのボタンを押したかリッスン
         when (v.id) {
-            R.id.btnChoiseA -> userSelectedAnswerIndex = 0
-            R.id.btnChoiseB -> userSelectedAnswerIndex = 1
-            R.id.btnChoiseC -> userSelectedAnswerIndex = 2
-            R.id.btnChoiseD -> userSelectedAnswerIndex = 3
+            R.id.btnChoiseA -> {userSelectedAnswerIndex = 0; btnChoiseA.setBackgroundResource(R.drawable.border)}
+            R.id.btnChoiseB -> {userSelectedAnswerIndex = 1; btnChoiseB.setBackgroundResource(R.drawable.border)}
+            R.id.btnChoiseC -> {userSelectedAnswerIndex = 2; btnChoiseC.setBackgroundResource(R.drawable.border)}
+            R.id.btnChoiseD -> {userSelectedAnswerIndex = 3; btnChoiseD.setBackgroundResource(R.drawable.border)}
         }
         // クイズの成否判断選んだ文字列と、クイズの正解の文字列が等しい場合正解
         // テキスト切り替えと、正解不正解数のカウントアップを行う
@@ -173,6 +234,8 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
         btnChoiseB.text = mQuizArray[currentQuizIndex].quizChoises[1]
         // 一旦全ての選択肢をVisibleに
         changeVisibleState()
+        // お気に入りかどうか判断させる
+        judgeFavorite()
 
         // 選択肢数に応じてボタンをインビジブルに切り替える処理
         if (mQuizArray[currentQuizIndex].quizChoises.size == 2) {
@@ -239,28 +302,25 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
         resultRef.setValue(resultArray)
     }
 
-    // クイズ結果をFBに保存する。[Result] - [Genre] - [userId] - [日付]　の順。
-    // UserIdはアノニマスの場合、GUID。結果はResultというアレイに入っている。
-    private fun saveFavoriteToFB(){
-        val user = FirebaseAuth.getInstance().currentUser
-        // ユーザーIDを指定する
-        if (user != null) {
-            userId = user.uid
-        } else if (user == null) {
-            val sp = PreferenceManager.getDefaultSharedPreferences(this)
-            userId = sp.getString(SP_STR_USER_ID, "")
-            if (userId.length == 0) {
-                val editor = sp.edit()
-                userId = UUID.randomUUID().toString()
-                editor.putString(SP_STR_USER_ID, userId)
-                editor.commit()
-            }
-        }
+    // お気に入りをFBに保存する
+    private fun saveFavoriteToFB(userid:String){
         val databaseReference = FirebaseDatabase.getInstance().reference
-        val resultRef = databaseReference.child(FBPATH_FAVORITES)
-            .child(userId)
-            .child(mGenre.toString())
-        resultRef.setValue(mQuizArray[currentQuizIndex].quizId)
+        val addFavRef = databaseReference
+            .child(FBPATH_FAVORITES)
+            .child(userid)
+            .child(mQuizArray[currentQuizIndex].quizId)
+        addFavRef.setValue(mGenre)
+        favoriteAction()
+    }
+    // お気に入りをFBからさくじょする
+    private fun removeFavoriteToFB(userid:String){
+        val databaseReference = FirebaseDatabase.getInstance().reference
+        val removeFavRef = databaseReference
+            .child(FBPATH_FAVORITES)
+            .child(userid)
+            .child(mQuizArray[currentQuizIndex].quizId)
+        removeFavRef.removeValue()
+        undoFavoriteAction()
     }
 
     // 最終画面に遷移する。正解数と不正回数を渡してアップないで計算する
@@ -288,4 +348,25 @@ class PlayQuiz : AppCompatActivity(), View.OnClickListener {
         btnDetail.isEnabled = false; btnNextQuiz.isEnabled = false
         btnDetail.isVisible = false; btnNextQuiz.isVisible = false
     }
+
+    ////// お気に入り機能
+    // オキニフラグを反転させて、ボタンの色を変える
+    fun favoriteAction (){
+        isFavorite = true
+        favoriteBtn.setTextColor(Color.parseColor(favoritedBtnColor))
+    }
+    fun undoFavoriteAction (){
+        isFavorite = false
+        favoriteBtn.setTextColor(Color.parseColor(notFavoritedBtnColor))
+    }
+
+    // お気に入りかどうか判断させている
+    fun judgeFavorite(){
+        if (mfavArray.contains(mQuizArray[currentQuizIndex].quizId)) {
+            favoriteAction()
+        } else {
+            undoFavoriteAction()
+        }
+    }
+
 }
